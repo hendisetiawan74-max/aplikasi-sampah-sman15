@@ -96,18 +96,20 @@ with tab2:
         st.write("---")
         st.write("### 📸 Galeri Dokumentasi")
         
-        # Mencari semua foto yang ada di folder dokumentasi
-        daftar_foto = os.listdir("dokumentasi")
-        
-        if len(daftar_foto) > 0:
-            # Membuat tampilan berjejer 3 kolom
-            kolom_galeri = st.columns(3)
-            for indeks, nama_foto in enumerate(daftar_foto):
-                lokasi_foto = os.path.join("dokumentasi", nama_foto)
-                # Menampilkan foto secara bergiliran di 3 kolom
-                with kolom_galeri[indeks % 3]:
-                    st.image(lokasi_foto, caption=nama_foto, use_column_width=True)
-        else:
-            st.info("Belum ada foto dokumentasi yang diunggah.")
-    else:
-        st.info("Belum ada data setoran yang masuk.")
+        # Mengecek apakah folder dokumentasi benar-benar ada
+        if os.path.exists("dokumentasi"):
+            # Mencari semua file
+            semua_file = os.listdir("dokumentasi")
+            
+            # FITUR PINTAR: Menyaring hanya file yang berakhiran gambar saja
+            daftar_foto = [file for file in semua_file if file.endswith(('.png', '.jpg', '.jpeg', '.PNG', '.JPG', '.JPEG'))]
+            
+            if len(daftar_foto) > 0:
+                kolom_galeri = st.columns(3)
+                for indeks, nama_foto in enumerate(daftar_foto):
+                    lokasi_foto = os.path.join("dokumentasi", nama_foto)
+                    with kolom_galeri[indeks % 3]:
+                        # Memperbarui kode ke versi terbaru: use_container_width
+                        st.image(lokasi_foto, caption=nama_foto, use_container_width=True)
+            else:
+                st.info("Belum ada foto dokumentasi yang diunggah.")
