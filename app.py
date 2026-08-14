@@ -44,7 +44,7 @@ with tab1:
     
     with st.form("form_setoran"):
         tanggal = st.date_input("Hari/Tanggal", date.today())
-        daftar_kelas = ["10-RPL 1", "10-RPL 2", "10-TKJ 1", "10-TKJ 2", "11-RPL 1", "12-TKJ 1"]
+        daftar_kelas = ["10-1", "10-2", "10-3", "10-4", "10-5", "10-6", "11-1", "11-2", "11-3", "11-4", "11-5", "11-6", "12-1", "12-2", "12-3", "12-4", "12-5", "12-6", ]
         kelas = st.selectbox("Pilih Kelas", daftar_kelas)
         petugas = st.text_input("Nama Petugas Piket")
         organik = st.number_input("Berat Sampah Organik (Kg)", min_value=0.0, step=0.1)
