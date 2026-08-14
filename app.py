@@ -73,6 +73,7 @@ with tab1:
                 "Kelas": [kelas],
                 "Petugas Piket": [petugas],
                 "Organik (Kg)": [organik],
+                "Anorganik (Kg)": [anorganik],
                 "Nama Foto": [nama_file_foto]
             })
             data = pd.concat([data, data_baru], ignore_index=True)
