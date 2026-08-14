@@ -6,20 +6,32 @@ import os
 # --- PENGATURAN HALAMAN UTAMA ---
 st.set_page_config(page_title="Bank Sampah Sekolah", page_icon="♻️", layout="centered")
 
-# Judul Aplikasi
-st.title("♻️ Sistem Monitoring Sampah Sekolah")
-st.write("Catat dan pantau setoran sampah harian dari setiap kelas untuk lingkungan yang lebih bersih!")
+# --- MEMBUAT FOLDER PENYIMPANAN FOTO ---
+# Otomatis membuat folder 'dokumentasi' jika belum ada
+if not os.path.exists("dokumentasi"):
+    os.makedirs("dokumentasi")
 
-# --- SISTEM PENYIMPANAN DATA SEMENTARA ---
-# Kita menyimpan data di dalam file Excel versi sederhana (CSV)
+# --- MENAMBAHKAN LOGO & JUDUL ---
+col1, col2 = st.columns([1, 5])
+with col1:
+    try:
+        st.image("logo.png", width=80)
+    except:
+        st.write("🖼️")
+
+with col2:
+    st.title("Sistem Monitoring Sampah")
+
+st.write("Catat dan pantau setoran sampah harian beserta dokumentasinya!")
+
+# --- SISTEM PENYIMPANAN DATA ---
 DATA_FILE = "data_sampah.csv"
 
 def load_data():
     if os.path.exists(DATA_FILE):
         return pd.read_csv(DATA_FILE)
     else:
-        # Jika file belum ada, buat kerangka tabelnya
-        return pd.DataFrame(columns=["Tanggal", "Kelas", "Organik (Kg)", "Anorganik (Kg)"])
+        return pd.DataFrame(columns=["Tanggal", "Kelas", "Petugas Piket", "Organik (Kg)", "Nama Foto"])
 
 data = load_data()
 
@@ -29,58 +41,73 @@ tab1, tab2 = st.tabs(["📝 Input Setoran Kelas", "📊 Klasemen & Dashboard"])
 # --- MENU 1: FORMULIR INPUT ---
 with tab1:
     st.header("Formulir Setoran Harian")
-    st.write("Silakan masukkan data timbangan sampah di bawah ini:")
     
-    # Membuat kotak formulir
     with st.form("form_setoran"):
         tanggal = st.date_input("Hari/Tanggal", date.today())
-        
-        # Bapak/Ibu bisa mengganti daftar kelas ini sesuai kondisi di sekolah
-        daftar_kelas = ["10-1", "10-2", "10-3", "10-4", "10-5", "10-6", "11-1", "11-2", "11-3", "11-4", "11-5", "11-6", "12-1", "12-2", "12-3", "12-4", "12-5", "11-6", "11-1", "11-1",]
+        daftar_kelas = ["10-RPL 1", "10-RPL 2", "10-TKJ 1", "10-TKJ 2", "11-RPL 1", "12-TKJ 1"]
         kelas = st.selectbox("Pilih Kelas", daftar_kelas)
+        petugas = st.text_input("Nama Petugas Piket")
+        organik = st.number_input("Berat Sampah Organik (Kg)", min_value=0.0, step=0.1)
         
-        # Membuat 2 kolom sejajar untuk input berat sampah
-        col1, col2 = st.columns(2)
-        with col1:
-            organik = st.number_input("Berat Sampah Organik (Kg)", min_value=0.0, step=0.1)
-        with col2:
-            anorganik = st.number_input("Berat Sampah Anorganik (Kg)", min_value=0.0, step=0.1)
+        st.write("---")
+        st.write("**Dokumentasi (Opsional)**")
+        foto = st.file_uploader("Unggah Foto Timbangan / Kegiatan", type=['jpg', 'jpeg', 'png'])
             
-        # Tombol Simpan
         submit = st.form_submit_button("Simpan Data Setoran")
         
         if submit:
-            # Jika tombol ditekan, masukkan data baru ke dalam tabel
+            nama_file_foto = "Tidak ada"
+            
+            # Jika ada foto yang diupload, simpan file fisiknya ke folder 'dokumentasi'
+            if foto is not None:
+                # Membuat nama foto unik gabungan dari kelas dan nama asli file
+                nama_file_foto = f"{kelas}_{foto.name}"
+                lokasi_simpan = os.path.join("dokumentasi", nama_file_foto)
+                
+                with open(lokasi_simpan, "wb") as f:
+                    f.write(foto.getbuffer())
+            
+            # Simpan data ke Excel (CSV)
             data_baru = pd.DataFrame({
                 "Tanggal": [tanggal],
                 "Kelas": [kelas],
+                "Petugas Piket": [petugas],
                 "Organik (Kg)": [organik],
-                "Anorganik (Kg)": [anorganik]
+                "Nama Foto": [nama_file_foto]
             })
             data = pd.concat([data, data_baru], ignore_index=True)
-            data.to_csv(DATA_FILE, index=False) # Simpan ke file
-            st.success(f"Alhamdulillah, data dari kelas {kelas} berhasil disimpan!")
+            data.to_csv(DATA_FILE, index=False) 
+            st.success(f"Data setoran kelas {kelas} berhasil disimpan!")
 
 # --- MENU 2: DASHBOARD MONITORING ---
 with tab2:
     st.header("Dashboard Monitoring Sekolah")
     
     if not data.empty:
-        st.write("### 🏆 Klasemen Kelas Terbersih (Total Sampah)")
-        
-        # Menghitung total sampah per kelas secara otomatis
-        rekap = data.groupby("Kelas")[["Organik (Kg)", "Anorganik (Kg)"]].sum().reset_index()
-        rekap["Total Keseluruhan (Kg)"] = rekap["Organik (Kg)"] + rekap["Anorganik (Kg)"]
-        
-        # Mengurutkan dari yang paling berat
-        rekap = rekap.sort_values(by="Total Keseluruhan (Kg)", ascending=False)
-        
-        # Menampilkan Grafik Batang (Bar Chart)
-        st.bar_chart(rekap, x="Kelas", y=["Organik (Kg)", "Anorganik (Kg)"], color=["#4CAF50", "#2196F3"])
+        st.write("### 🏆 Klasemen Kelas Terbersih")
+        rekap = data.groupby("Kelas")["Organik (Kg)"].sum().reset_index()
+        rekap = rekap.sort_values(by="Organik (Kg)", ascending=False)
+        st.bar_chart(rekap, x="Kelas", y="Organik (Kg)", color="#4CAF50")
         
         st.write("### 📋 Riwayat Setoran Lengkap")
-        # Menampilkan tabel data lengkap
         st.dataframe(data, use_container_width=True)
         
+        # --- FITUR BARU: GALERI FOTO ---
+        st.write("---")
+        st.write("### 📸 Galeri Dokumentasi")
+        
+        # Mencari semua foto yang ada di folder dokumentasi
+        daftar_foto = os.listdir("dokumentasi")
+        
+        if len(daftar_foto) > 0:
+            # Membuat tampilan berjejer 3 kolom
+            kolom_galeri = st.columns(3)
+            for indeks, nama_foto in enumerate(daftar_foto):
+                lokasi_foto = os.path.join("dokumentasi", nama_foto)
+                # Menampilkan foto secara bergiliran di 3 kolom
+                with kolom_galeri[indeks % 3]:
+                    st.image(lokasi_foto, caption=nama_foto, use_column_width=True)
+        else:
+            st.info("Belum ada foto dokumentasi yang diunggah.")
     else:
-        st.info("Belum ada data setoran yang masuk. Silakan isi form di menu 'Input Setoran Kelas'.")
+        st.info("Belum ada data setoran yang masuk.")
