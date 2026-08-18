@@ -48,7 +48,7 @@ with tab1:
         kelas = st.selectbox("Pilih Kelas", daftar_kelas)
         petugas = st.text_input("Nama Petugas Piket")
         organik = st.number_input("Berat Sampah Organik (Kg)", min_value=0.0, step=0.1)
-        
+        anorganik = st.number_input("Berat Sampah Anorganik (Kg)", min_value=0.0, step=0.1)
         st.write("---")
         st.write("**Dokumentasi (Opsional)**")
         foto = st.file_uploader("Unggah Foto Timbangan / Kegiatan", type=['jpg', 'jpeg', 'png'])
